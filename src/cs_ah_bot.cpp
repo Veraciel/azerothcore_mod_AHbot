@@ -15,41 +15,36 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* ScriptData
-Name: ah_bot_commandscript
-%Complete: 100
-Comment: All ah_bot related commands
-Category: commandscripts
-EndScriptData */
-
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "AuctionHouseBot.h"
 #include "Config.h"
+#include "StringConvert.h"
+
+using namespace Acore::ChatCommands;
 
 class ah_bot_commandscript : public CommandScript
 {
 public:
     ah_bot_commandscript() : CommandScript("ah_bot_commandscript") { }
 
-    std::vector<ChatCommand> GetCommands() const override
+    ChatCommandTable GetCommands() const override
     {
-        static std::vector<ChatCommand> commandTable =
+        static ChatCommandTable commandTable =
         {
-            { "ahbotoptions",   SEC_GAMEMASTER,     true,   &HandleAHBotOptionsCommand,     "" },
+            { "ahbotoptions", HandleAHBotOptionsCommand, SEC_GAMEMASTER, Console::Yes },
         };
+
         return commandTable;
     }
 
-    static bool HandleAHBotOptionsCommand(ChatHandler* handler, const char*args)
+    static bool HandleAHBotOptionsCommand(ChatHandler* handler, Tail opt, Tail ahMapIdStr)
     {
         uint32 ahMapID = 0;
-        char* opt = strtok((char*)args, " ");
-        char* ahMapIdStr = strtok(NULL, " ");
 
-        if (ahMapIdStr)
+        if (!ahMapIdStr.empty())
         {
-            ahMapID = uint32(strtoul(ahMapIdStr, NULL, 0));
+            ahMapID = Acore::StringTo<uint32>(ahMapIdStr).value();
             switch (ahMapID)
             {
                 case 2:
@@ -57,28 +52,26 @@ public:
                 case 7:
                     break;
                 default:
-                    opt = NULL;
+                    opt = "";
                     break;
             }
         }
 
-        if (!opt)
+        if (opt.empty())
         {
             handler->PSendSysMessage("Syntax is: ahbotoptions $option $ahMapID (2, 6 or 7) $parameter");
             handler->PSendSysMessage("Try ahbotoptions help to see a list of options.");
             return false;
         }
 
-        int l = strlen(opt);
+        int l = opt.length();
 
-        if (strncmp(opt, "help", l) == 0)
+        if (!strncmp(opt.data(), "help", l))
         {
             handler->PSendSysMessage("AHBot commands:");
             handler->PSendSysMessage("ahexpire");
             handler->PSendSysMessage("minitems");
             handler->PSendSysMessage("maxitems");
-            //handler->PSendSysMessage("");
-            //handler->PSendSysMessage("");
             handler->PSendSysMessage("percentages");
             handler->PSendSysMessage("minprice");
             handler->PSendSysMessage("maxprice");
@@ -90,20 +83,20 @@ public:
             handler->PSendSysMessage("bidsperinterval");
             return true;
         }
-        else if (strncmp(opt, "ahexpire", l) == 0)
+        else if (!strncmp(opt.data(), "ahexpire", l))
         {
-            if (!ahMapIdStr)
+            if (ahMapIdStr.empty())
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions ahexpire $ahMapID (2, 6 or 7)");
                 return false;
             }
 
-            auctionbot->Commands(0, ahMapID, 0, NULL);
+            auctionbot->Commands(0, ahMapID, 0, nullptr);
         }
-        else if (strncmp(opt, "minitems", l) == 0)
+        else if (!strncmp(opt.data(), "minitems", l))
         {
-            char* param1 = strtok(NULL, " ");
-            if (!ahMapIdStr || !param1)
+            char* param1 = strtok(nullptr, " ");
+            if (ahMapIdStr.empty() || !param1)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions minitems $ahMapID (2, 6 or 7) $minItems");
                 return false;
@@ -111,10 +104,10 @@ public:
 
             auctionbot->Commands(1, ahMapID, 0, param1);
         }
-        else if (strncmp(opt, "maxitems", l) == 0)
+        else if (!strncmp(opt.data(), "maxitems", l))
         {
-            char* param1 = strtok(NULL, " ");
-            if (!ahMapIdStr || !param1)
+            char* param1 = strtok(nullptr, " ");
+            if (ahMapIdStr.empty() || !param1)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions maxitems $ahMapID (2, 6 or 7) $maxItems");
                 return false;
@@ -122,54 +115,34 @@ public:
 
             auctionbot->Commands(2, ahMapID, 0, param1);
         }
-        else if (strncmp(opt, "mintime", l) == 0)
+        else if (!strncmp(opt.data(), "mintime", l))
         {
             handler->PSendSysMessage("ahbotoptions mintime has been deprecated");
             return false;
-            /*
-            char* param1 = strtok(NULL, " ");
-            if (!ahMapIdStr || !param1)
-            {
-                PSendSysMessage("Syntax is: ahbotoptions mintime $ahMapID (2, 6 or 7) $mintime");
-                return false;
-            }
-
-            auctionbot.Commands(3, ahMapID, 0, param1);
-            */
         }
-        else if (strncmp(opt, "maxtime", l) == 0)
+        else if (!strncmp(opt.data(), "maxtime", l))
         {
             handler->PSendSysMessage("ahbotoptions maxtime has been deprecated");
             return false;
-            /*
-            char* param1 = strtok(NULL, " ");
-            if (!ahMapIdStr || !param1)
-            {
-                PSendSysMessage("Syntax is: ahbotoptions maxtime $ahMapID (2, 6 or 7) $maxtime");
-                return false;
-            }
-
-            auctionbot.Commands(4, ahMapID, 0, param1);
-            */
         }
-        else if (strncmp(opt, "percentages", l) == 0)
+        else if (!strncmp(opt.data(), "percentages", l))
         {
-            char* param1 = strtok(NULL, " ");
-            char* param2 = strtok(NULL, " ");
-            char* param3 = strtok(NULL, " ");
-            char* param4 = strtok(NULL, " ");
-            char* param5 = strtok(NULL, " ");
-            char* param6 = strtok(NULL, " ");
-            char* param7 = strtok(NULL, " ");
-            char* param8 = strtok(NULL, " ");
-            char* param9 = strtok(NULL, " ");
-            char* param10 = strtok(NULL, " ");
-            char* param11 = strtok(NULL, " ");
-            char* param12 = strtok(NULL, " ");
-            char* param13 = strtok(NULL, " ");
-            char* param14 = strtok(NULL, " ");
+            char* param1 = strtok(nullptr, " ");
+            char* param2 = strtok(nullptr, " ");
+            char* param3 = strtok(nullptr, " ");
+            char* param4 = strtok(nullptr, " ");
+            char* param5 = strtok(nullptr, " ");
+            char* param6 = strtok(nullptr, " ");
+            char* param7 = strtok(nullptr, " ");
+            char* param8 = strtok(nullptr, " ");
+            char* param9 = strtok(nullptr, " ");
+            char* param10 = strtok(nullptr, " ");
+            char* param11 = strtok(nullptr, " ");
+            char* param12 = strtok(nullptr, " ");
+            char* param13 = strtok(nullptr, " ");
+            char* param14 = strtok(nullptr, " ");
 
-            if (!ahMapIdStr || !param14)
+            if (ahMapIdStr.empty() || !param14)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions percentages $ahMapID (2, 6 or 7) $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14");
                 handler->PSendSysMessage("1 GreyTradeGoods 2 WhiteTradeGoods 3 GreenTradeGoods 4 BlueTradeGoods 5 PurpleTradeGoods");
@@ -236,12 +209,12 @@ public:
             strcat(param, param14);
             auctionbot->Commands(5, ahMapID, 0, param);
         }
-        else if (strncmp(opt, "minprice", l) == 0)
+        else if (!strncmp(opt.data(), "minprice", l))
         {
-            char* param1 = strtok(NULL, " ");
-            char* param2 = strtok(NULL, " ");
+            char* param1 = strtok(nullptr, " ");
+            char* param2 = strtok(nullptr, " ");
 
-            if (!ahMapIdStr || !param1 || !param2)
+            if (ahMapIdStr.empty() || !param1 || !param2)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions minprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
                 return false;
@@ -267,11 +240,11 @@ public:
                 return false;
             }
         }
-        else if (strncmp(opt, "maxprice", l) == 0)
+        else if (strncmp(opt.data(), "maxprice", l) == 0)
         {
             char* param1 = strtok(NULL, " ");
             char* param2 = strtok(NULL, " ");
-            if (!ahMapIdStr || !param1 || !param2)
+            if (ahMapIdStr.empty() || !param1 || !param2)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions maxprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
                 return false;
@@ -296,18 +269,18 @@ public:
                 return false;
             }
         }
-        else if (strncmp(opt, "minbidprice", l) == 0)
+        else if (strncmp(opt.data(), "minbidprice", l) == 0)
         {
             char* param1 = strtok(NULL, " ");
             char* param2 = strtok(NULL, " ");
 
-            if (!ahMapIdStr || !param2 || !param2)
+            if (ahMapIdStr.empty() || !param2 || !param2)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions minbidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
                 return false;
             }
 
-            uint32 minBidPrice = uint32(strtoul(param2, NULL, 0));
+            uint32 minBidPrice = Acore::StringTo<uint32>(param2).value();
             if (minBidPrice < 1 || minBidPrice > 100)
             {
                 handler->PSendSysMessage("The min bid price multiplier must be between 1 and 100");
@@ -334,12 +307,12 @@ public:
                 return false;
             }
         }
-        else if (strncmp(opt, "maxbidprice", l) == 0)
+        else if (strncmp(opt.data(), "maxbidprice", l) == 0)
         {
             char* param1 = strtok(NULL, " ");
             char* param2 = strtok(NULL, " ");
 
-            if (!ahMapIdStr || !param1 || !param2)
+            if (ahMapIdStr.empty() || !param1 || !param2)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions maxbidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
                 return false;
@@ -372,23 +345,16 @@ public:
                 return false;
             }
         }
-        else if (strncmp(opt, "maxstack",l) == 0)
+        else if (strncmp(opt.data(), "maxstack",l) == 0)
         {
             char* param1 = strtok(NULL, " ");
             char* param2 = strtok(NULL, " ");
 
-            if (!ahMapIdStr || !param1 || !param2)
+            if (ahMapIdStr.empty() || !param1 || !param2)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions maxstack $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $value");
                 return false;
             }
-
-            // uint32 maxStack = uint32(strtoul(param2, NULL, 0));
-            // if (maxStack < 0)
-            // {
-            //     handler->PSendSysMessage("maxstack can't be a negative number.");
-            //    return false;
-            // }
 
             if (strncmp(param1, "grey",l) == 0)
                 auctionbot->Commands(10, ahMapID, AHB_GREY, param2);
@@ -410,12 +376,12 @@ public:
                 return false;
             }
         }
-        else if (strncmp(opt, "buyerprice", l) == 0)
+        else if (strncmp(opt.data(), "buyerprice", l) == 0)
         {
             char* param1 = strtok(NULL, " ");
             char* param2 = strtok(NULL, " ");
 
-            if (!ahMapIdStr || !param1 || !param2)
+            if (ahMapIdStr.empty() || !param1 || !param2)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions buyerprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue or purple) $price");
                 return false;
@@ -441,11 +407,11 @@ public:
                 return false;
             }
         }
-        else if (strncmp(opt, "bidinterval", l) == 0)
+        else if (strncmp(opt.data(), "bidinterval", l) == 0)
         {
             char* param1 = strtok(NULL, " ");
 
-            if (!ahMapIdStr || !param1)
+            if (ahMapIdStr.empty() || !param1)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions bidinterval $ahMapID (2, 6 or 7) $interval(in minutes)");
                 return false;
@@ -453,11 +419,11 @@ public:
 
             auctionbot->Commands(12, ahMapID, 0, param1);
         }
-        else if (strncmp(opt, "bidsperinterval", l) == 0)
+        else if (strncmp(opt.data(), "bidsperinterval", l) == 0)
         {
             char* param1 = strtok(NULL, " ");
 
-            if (!ahMapIdStr || !param1)
+            if (ahMapIdStr.empty() || !param1)
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions bidsperinterval $ahMapID (2, 6 or 7) $bids");
                 return false;
